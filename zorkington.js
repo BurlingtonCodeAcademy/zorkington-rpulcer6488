@@ -1,4 +1,4 @@
-// Program: zork.js
+// Program: zorkington.js
 // Author:  Ron Pulcer
 // Date:    March 4, 2019
 // Version: Initial version
