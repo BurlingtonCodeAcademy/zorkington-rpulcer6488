@@ -1,7 +1,8 @@
-// Program: zorkington.js
-// Author:  Ron Pulcer
-// Date:    March 5, 2019
-// Version: Initial version (refactored)
+// Program:   zorkington.js
+// Author:    Ron Pulcer
+// Init Date: March 5, 2019
+// Updated:   April 22, 2019
+// Version:   Refactored based on feedback from Alex C.
 
 const readline = require('readline');
 
@@ -17,14 +18,15 @@ function ask(questionText) {
 }
 
 // Constants for room names
-const sidewalk = "182 Main St.";
-const foyer    = "182 Main St. - Foyer";
-const stairs   = "182 Main St. - Stairs";
+const sidewalk = "sidewalk";
+const foyer    = "foyer";
+const stairs   = "stairs";
 let verbose = true;
 let rooms = {};
 
 // Valid paths through building can be derived from validExit and validEntry array properties
 rooms[sidewalk] = {
+    displayName: "182 Main St.",
     description: "You are standing on Main Street between Church and South Winooski.\n" +
                  "There is a door here. A keypad sits on the handle.\n" +
                  "On the door is a handwritten sign.",
@@ -35,6 +37,7 @@ rooms[sidewalk] = {
 let currentRoom = sidewalk;
 
 rooms[foyer] = {
+    displayName: "182 Main St. - Foyer",
     description: "You are in a foyer. Or maybe it's an antechamber. Or a vestibule. " +
                  "Or an entryway. Or an atrium. Or a narthex.\n" +
                  "But let's forget all that fancy flatlander vocabulary, and just call it a foyer. " +
@@ -47,6 +50,15 @@ rooms[foyer] = {
     validEntry: [sidewalk, stairs]
 }
 
+rooms[stairs] = {
+    displayName: "182 Main St. - Stairs",
+    description: "You are on the stairs, which lead the 3rd floor, where the classroom is located." +
+                 "You are not able to enter the 2nd floor, so keep walking UP the stairs.",
+    inventory: {},
+    validExit: [foyer],
+    validEntry: [foyer]
+}
+
 let playerInventory = {};
 
 function roomPrompt(theRoom) {
@@ -55,6 +67,9 @@ function roomPrompt(theRoom) {
 }
 
 function sidewalkHandler(userReq) {
+    // Assume valid request, until NOT!
+    let processed = true;
+
     if(userReq == "read sign") {
         console.log('The sign says "Welcome to Burlington Code Academy!\n' + 
         'Come on up to the third floor. If the door is locked, use the code 12345."');
@@ -77,11 +92,16 @@ function sidewalkHandler(userReq) {
         roomPrompt(currentRoom);
     }
     else if(! userReq.startsWith("take") && ! userReq.startsWith("drop")) {
-        console.log("Sorry, I don't know how to " + userReq + ".");
+        processed = false;
     }
+
+    return processed;
 }
 
 function foyerHandler(userReq) {
+    // Assume valid request, until NOT!
+    let processed = true;
+
     // TBD for later: user messages when in Foyer
     if(userReq == "leave building" || userReq == "outside") {
         console.log("Success! The door opens. " + 
@@ -91,11 +111,17 @@ function foyerHandler(userReq) {
         roomPrompt(currentRoom);
     }
     else if(! userReq.startsWith("take") && ! userReq.startsWith("drop")) {
-        console.log("Sorry, I don't know how to " + userReq + ".");
+        processed = false;
     }
+
+    return processed;
 }
 
-function takeInventoryHandler(userReq) { console.log("in function takeInventoryHandler()");
+function stairsHandler(userReq) {
+    // Logic TBD
+}
+
+function takeInventoryHandler(userReq) {
     if(userReq == "take paper" || userReq == "take seven days") {
         if(rooms[currentRoom].inventory.newspaper) {
             console.log("You pick up the paper and leaf through it looking for comics " +
@@ -112,7 +138,7 @@ function takeInventoryHandler(userReq) { console.log("in function takeInventoryH
     }
 }
 
-function dropInventoryHandler(userReq) { console.log("in function dropInventoryHandler()");
+function dropInventoryHandler(userReq) {
     if (userReq == "drop paper" || userReq == "drop seven days") {
         if(playerInventory.newspaper) {
             console.log("You are leaving the newspaper in this room: " + currentRoom + ".");
@@ -139,6 +165,9 @@ async function start() {
             process.exit(0);
         }
 
+        // Assume valid request, until NOT!
+        let rtnCode = true;
+
         if (answer == "verbose") {
             verbose = ! verbose;
             console.log("Toggling verbose mode to " + verbose);
@@ -164,13 +193,16 @@ async function start() {
 
         // Room handlers
         else if(currentRoom == sidewalk) {
-            sidewalkHandler(answer);
+            rtnCode = sidewalkHandler(answer);
         }
 
         else if(currentRoom == foyer) {
-            foyerHandler(answer);
+            rtnCode = foyerHandler(answer);
         }
 
+        if( ! rtnCode) {
+            console.log("Sorry, I don't know how to " + answer + ".");
+        }
 
         console.log("You are here: " + currentRoom);
 
